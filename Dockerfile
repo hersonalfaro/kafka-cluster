@@ -7,8 +7,9 @@ LABEL dscription="Zookeeper and Kafka Base Image"
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV SCALA_VERSION 2.11
-ENV KAFKA_VERSION 0.10.0.0
+ENV KAFKA_VERSION 0.10.2.2
 ENV KAFKA_HOME /opt/kafka
+ENV WORDCOUNT_VERSION v0.2
 
 # Update the base image and make sure all sources and packages are up to date.
 RUN apt-get update && apt-get -q -y upgrade && apt-get clean 
@@ -21,5 +22,5 @@ RUN apt-get install -y zookeeper && \
     rm /tmp/kafka_"$SCALA_VERSION"-"$KAFKA_VERSION".tgz
 
 COPY ./scripts/run.sh /bin/
-
+RUN mkdir -p /tmp/kafka-streams-examples/ && cd /tmp/kafka-streams-examples/ && wget https://github.com/hersonalfaro/kafka-streams-wordcount/releases/download/"${WORDCOUNT_VERSION}"/kafka-streams-wordcount.jar 
 ENTRYPOINT ["run.sh"]

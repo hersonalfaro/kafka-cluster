@@ -18,6 +18,13 @@ run_kafka() {
     fi
     sed -ri "s/(broker.id)=(.*)/\1=$BROKER_ID/g" $KAFKA_HOME/config/server.properties
 
+    # Configure the log data dir
+    if [ -z "$KAFKA_DATA_DIR" ]; then
+        KAFKA_DATA_DIR="$KAFKA_HOME/data/kafka_broker_$BROKER_ID"
+    fi
+    sed -ri "s~(log.dirs)=(.*)~\1=$KAFKA_DATA_DIR~g" $KAFKA_HOME/config/server.properties
+
+
     # Configure the advertised listeners.
     if [ -z "$ADVERTISED_LISTENERS" ]; then
         # Defaults to the Docker networks's internal IP.

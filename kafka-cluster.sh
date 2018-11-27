@@ -3,15 +3,15 @@
 cmd=${1:-help}
 script=$(basename $0)
 projectname=kafkacluster
-kafka_image=spiside/kafka-cluster
-
+kafka_image=hersonalfaro/kafka-cluster
+flush_messages_interval=10
 if [ "$cmd" == "help" ]; then
     cat <<EOF
 $script - A helpful CLI for wrapping commands
 
     bootstrap
         Starts up the kafka cluster using docker-compose, scales up to two
-        kafka nodes, and creates a topic 'test'. 
+        kafka nodes, and creates a topic 'test'.
     down
         Stops the running containers and removes the stopped containers.
     logs [-f, --follow]
@@ -37,7 +37,7 @@ docker_compose() {
 case $cmd in
     bootstrap)
         # Check that the image exists and, if not, pull it.
-        docker inspect spiside/kafka-cluster &> /dev/null
+        docker inspect hersonalfaro/kafka-cluster &> /dev/null
         if [ $? -ne 0 ]; then
             echo "Docker image doesn't exist, pulling..."
             docker pull $kafka_image
@@ -51,6 +51,16 @@ case $cmd in
         echo 'bash $KAFKA_HOME/bin/kafka-topics.sh --create --topic test --partitions 2 --replication-factor 2 --zookeeper zookeeper:2181' \
              | docker run --net=$projectname\_default -e RUN_TYPE=manual -a stdin -i $kafka_image &> /dev/null
         echo "Wrote topic 'test'"
+        echo 'bash $KAFKA_HOME/bin/kafka-topics.sh --create --topic wordcount-input --partitions 2 --replication-factor 2 --zookeeper zookeeper:2181' \
+             | docker run --net=$projectname\_default -e RUN_TYPE=manual -a stdin -i $kafka_image &> /dev/null
+        echo "Wrote topic 'wordcount-input'"
+        echo 'bash $KAFKA_HOME/bin/kafka-topics.sh --create --topic wordcount-ouput --partitions 2 --replication-factor 2 --zookeeper zookeeper:2181' \
+             | docker run --net=$projectname\_default -e RUN_TYPE=manual -a stdin -i $kafka_image &> /dev/null
+        echo "Wrote topic 'wordcount-output'"
+
+#        echo 'bash $KAFKA_HOME/bin/kafka-configs.sh  --zookeeper zookeeper:2181 --alter --add-config "log.flush.interval.messages='${flush_messages_interval}'" '  \
+#             | docker run --net=$projectname\_default -e RUN_TYPE=manual -a stdin -i $kafka_image &> /dev/null
+#        echo "Altered configuration to flush messages to disk 10 interval"
         echo "Bootstrap ran successfully!"
         set +e
         ;;
